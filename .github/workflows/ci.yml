@@ -19,4 +19,4 @@ jobs:
         run: docker pull 10.0.0.2:81/prod/ct-backend:latest
 
       - name: Run Docker Compose
-        run: docker compose -f compose-prod.yml up -d
+        run: docker compose -f compose-prod.yaml up -d
