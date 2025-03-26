@@ -1,0 +1,12 @@
+services:
+  server:
+    build:
+      context: .
+    image: 10.0.0.2:81/dev/ct-backend:latest
+    container_name: ct-backend-dev
+    restart: always
+    ports:
+      - 8889:8889
+    env_file:
+      - .env.dev
+

@@ -1,0 +1,25 @@
+name: Deploy to Self-Hosted Runner
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Copy Environment File
+        run: cp /home/slave/environment/cahaya-teknik/.env.ct-backend.prod .env.prod
+
+      - name: Login to Private Docker Registry
+        run: docker login 10.0.0.2:81 -u <USERNAME> -p <PASSWORD>
+
+      - name: Pull Latest Image
+        run: docker pull 10.0.0.2:81/prod/ct-backend:latest
+
+      - name: Run Docker Compose
+        run: docker compose -f compose-prod.yml up -d

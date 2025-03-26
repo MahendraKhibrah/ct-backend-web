@@ -16,10 +16,10 @@ func SendEmailToAdmin(subject string, message string) error {
 		"",
 		os.Getenv("SMTP_EMAIL"),
 		os.Getenv("SMTP_PASSWORD"),
-		"smtp.gmail.com")
+		os.Getenv("SMTP_HOST"))
 
 	if err := smtp.SendMail(
-		"smtp.gmail.com:587",
+		os.Getenv("SMTP_HOST")+":"+os.Getenv("SMTP_PORT"),
 		auth,
 		os.Getenv("SMTP_EMAIL"),
 		[]string{"mahendrakrs448@gmail.com"},
@@ -38,10 +38,10 @@ func SendEmail(to string, subject string, message string) error {
 		"",
 		os.Getenv("SMTP_EMAIL"),
 		os.Getenv("SMTP_PASSWORD"),
-		"smtp.gmail.com")
+		os.Getenv("SMTP_HOST"))
 
 	if err := smtp.SendMail(
-		"smtp.gmail.com:587",
+		os.Getenv("SMTP_HOST")+":"+os.Getenv("SMTP_PORT"),
 		auth,
 		os.Getenv("SMTP_EMAIL"),
 		[]string{to},

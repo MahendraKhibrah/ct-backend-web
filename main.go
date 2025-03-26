@@ -18,7 +18,20 @@ func main() {
 	//}
 
 	db := Config.SetUpDatabaseConnection()
+
+	if db == nil {
+		panic("Failed to connect to relational database!")
+	}
 	defer Config.CloseDatabaseConnection(db)
+
+	println("Connected to relational database")
+
+	minioClient := Config.SetupMinioConnection()
+	if minioClient == nil {
+		panic("Failed to connect to minio!")
+	}
+
+	println("Connected to minio")
 
 	server := gin.Default()
 

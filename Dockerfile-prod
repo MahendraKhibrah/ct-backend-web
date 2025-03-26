@@ -17,7 +17,7 @@ WORKDIR /app
 
 COPY --from=builder /app/main .
 
-COPY .env /app/.env
+COPY .env.prod /app/.env
 
 EXPOSE ${SERVER_PORT}
 

@@ -1,0 +1,12 @@
+services:
+  server:
+    build:
+      context: .
+    image: 10.0.0.2:81/prod/ct-backend:latest
+    container_name: ct-backend-prod
+    restart: always
+    ports:
+      - 8888:8888
+    env_file:
+      - .env.prod
+
