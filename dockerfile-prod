@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM golang:1.22-alpine as builder
+FROM golang:1.23-alpine as builder
 
 WORKDIR /app
 
@@ -19,6 +19,6 @@ COPY --from=builder /app/main .
 
 COPY .env.prod /app/.env
 
-EXPOSE ${SERVER_PORT}
+EXPOSE 8888
 
 CMD ["/app/main"]

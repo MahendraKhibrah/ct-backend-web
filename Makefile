@@ -4,12 +4,12 @@ wire-gen :
 	cd ..
 
 build-prod :
-	docker build -f Dockerfile-prod -t 10.0.0.2:81/prod/ct-backend:latest .
-	docker push 10.0.0.2:81/prod/ct-backend:latest
+	docker build -f dockerfile-prod -t 10.0.0.2:81/prod/ct-core:latest .
+	docker push 10.0.0.2:81/prod/ct-core:latest
 
-build-dev :
-	docker build -f Dockerfile-dev -t 10.0.0.2:81/dev/ct-backend:latest .
-	docker push 10.0.0.2:81/dev/ct-backend:latest
+build-staging :
+	docker build -f dockerfile-staging -t 10.0.0.2:81/staging/ct-core:latest .
+	docker push 10.0.0.2:81/staging/ct-core:latest
 
 generate-kube-config :
 	kompose -f docker-compose.yml convert

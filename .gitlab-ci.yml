@@ -1,0 +1,37 @@
+stages:
+  - deploy
+
+deploy_prod:
+  stage: deploy
+  variables:
+    IMAGE_NAME: 10.0.0.2:81/prod/ct-core:latest
+    CORE_PORT: 8888
+  before_script:
+    - docker login -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD" $HARBOR_URL
+  script:
+    - echo "Menarik image dari Harbor..."
+    - docker pull $IMAGE_NAME
+    - echo "Menghentikan container lama (jika ada)..."
+    - docker rm -f ct-core-prod || true
+    - echo "Menjalankan container..."
+    - docker run -d --name ct-core-prod -p $CORE_PORT:$CORE_PORT $IMAGE_NAME
+  only:
+    - main
+
+deploy_staging:
+  stage: deploy
+  variables:
+    IMAGE_NAME: 10.0.0.2:81/staging/ct-core:latest
+    CORE_PORT: 18888
+  before_script:
+    - docker login -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD" $HARBOR_URL
+  script:
+    - echo "Menarik image dari Harbor..."
+    - docker pull $IMAGE_NAME
+    - echo "Menghentikan container lama (jika ada)..."
+    - docker rm -f ct-core-staging || true
+    - echo "Menjalankan container..."
+    - docker run -d --name ct-core-staging -p $CORE_PORT:$CORE_PORT $IMAGE_NAME
+  only:
+    - staging
+
