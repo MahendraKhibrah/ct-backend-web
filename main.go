@@ -45,7 +45,7 @@ func main() {
 		log.Printf("error loading .env file: %v", err)
 	}
 
-	port := os.Getenv("PORT")
+	port := os.Getenv("GOLANG_PORT")
 	if port == "" {
 		port = "8888"
 	}

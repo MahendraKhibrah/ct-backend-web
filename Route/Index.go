@@ -6,7 +6,7 @@ import (
 )
 
 func Init(c *gin.Engine, db *gorm.DB) {
-	prefix := c.Group("/api/")
+	prefix := c.Group("/")
 	InitAuth(prefix, db)
 	InitProduct(prefix, db)
 	InitPurchase(prefix, db)
