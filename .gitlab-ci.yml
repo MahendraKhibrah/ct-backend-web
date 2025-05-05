@@ -14,7 +14,7 @@ deploy_prod:
     - echo "Menghentikan container lama (jika ada)..."
     - docker rm -f ct-core-prod || true
     - echo "Menjalankan container..."
-    - docker run -d --name ct-core-prod -network web -p $CORE_PORT:$CORE_PORT $IMAGE_NAME
+    - docker run -d --name ct-core-prod --network web -p $CORE_PORT:$CORE_PORT $IMAGE_NAME
   only:
     - main
 
@@ -31,7 +31,7 @@ deploy_staging:
     - echo "Menghentikan container lama (jika ada)..."
     - docker rm -f ct-core-staging || true
     - echo "Menjalankan container..."
-    - docker run -d --name ct-core-staging -network web -p $CORE_PORT:$CORE_PORT $IMAGE_NAME
+    - docker run -d --name ct-core-staging --network web -p $CORE_PORT:$CORE_PORT $IMAGE_NAME
   only:
     - staging
 
