@@ -10,9 +10,9 @@ import (
 
 type (
 	IInvoiceRepository interface {
-		GetAll() ([]Model.Invoice, error)
+		GetAll(request *Dto.GetInvoicesRequest) ([]Model.Invoice, error)
 		GetById(id int) (Model.Invoice, error)
-		GetLast() (*Model.Invoice, error)
+		GetLast(isTaxable bool) (*Model.Invoice, error)
 		Create(request *Dto.CreateInvoiceRequest) (err error)
 		Delete(request Dto.IdRequest) (err error)
 		UpdateDocument(request Dto.UpdateDocumentRequest) (err error)
@@ -29,6 +29,7 @@ type (
 		GetAllForDelivery() ([]Model.Invoice, error)
 		GetAllForReceipt() ([]Model.Invoice, error)
 		UpdateInvoiceTotalPrice(invoiceID int) error
+		GetSale(saleId int) (Model.Sale, error)
 	}
 
 	InvoiceRepository struct {
@@ -42,16 +43,26 @@ func InvoiceRepositoryProvider(DB *gorm.DB) *InvoiceRepository {
 	}
 }
 
-func (h *InvoiceRepository) GetAll() (invoices []Model.Invoice, err error) {
-	if err := h.DB.Preload("Client").Order("created_at DESC").Find(&invoices).Error; err != nil {
+func (h *InvoiceRepository) GetAll(request *Dto.GetInvoicesRequest) (invoices []Model.Invoice, err error) {
+	query := h.DB.Debug().Joins("JOIN clients ON clients.id = invoices.client_id").Preload("Client").Preload("Sales")
+
+	if request.Search != "" {
+		query = query.Where("clients.name ILIKE ? OR invoices.project_name ILIKE ?", "%"+request.Search+"%", "%"+request.Search+"%")
+	}
+
+	if request.Company != "" {
+		query = query.Where("invoice_code ILIKE ?", "%"+request.Company+"%")
+	}
+
+	if err := query.Order("created_at DESC").Find(&invoices).Error; err != nil {
 		return nil, err
 	}
 
 	return invoices, nil
 }
 
-func (h *InvoiceRepository) GetLast() (invoice *Model.Invoice, err error) {
-	if err := h.DB.Last(&invoice).Error; err != nil {
+func (h *InvoiceRepository) GetLast(isTaxable bool) (invoice *Model.Invoice, err error) {
+	if err := h.DB.Where("is_taxable = ?", isTaxable).Last(&invoice).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -63,7 +74,7 @@ func (h *InvoiceRepository) GetLast() (invoice *Model.Invoice, err error) {
 }
 
 func (h *InvoiceRepository) GetById(id int) (invoice Model.Invoice, err error) {
-	if err := h.DB.Preload("Client").Where("id = ?", id).First(&invoice).Error; err != nil {
+	if err := h.DB.Preload("Client").Preload("Sales").Where("id = ?", id).First(&invoice).Error; err != nil {
 		return Model.Invoice{}, err
 	}
 
@@ -79,6 +90,7 @@ func (h *InvoiceRepository) Create(request *Dto.CreateInvoiceRequest) (err error
 		PaymentMethod:       request.PaymentMethod,
 		PlatformDescription: request.PlatformDescription,
 		PlatformNumber:      request.PlatformNumber,
+		IsTaxable:           request.IsTaxable,
 		InvoiceStatusId:     1,
 	}
 
@@ -174,7 +186,6 @@ func (h *InvoiceRepository) UpdateFaktur(request *Dto.UpdateFakturRequest) (err 
 		Model(&Model.Invoice{}).
 		Where("id = ?", request.InvoiceId).
 		Update("discount", request.Discount).
-		Update("is_taxable", request.IsTaxable).
 		Update("payment_term", request.PaymentTerm).Error; err != nil {
 		return err
 	}
@@ -253,7 +264,7 @@ func (h *InvoiceRepository) GetSalesByInvoiceId(invoiceId int) (sales []Model.Sa
 func (h *InvoiceRepository) GetAllForDelivery() (invoices []Model.Invoice, err error) {
 	if err := h.DB.Preload("Client").
 		Joins("JOIN sales ON sales.invoice_id = invoices.id").
-		Where("invoice_status_id = 3 AND sales.not_sent_count > 0").
+		Where("sales.not_sent_count > 0").
 		Find(&invoices).Error; err != nil {
 		return nil, err
 	}
@@ -267,6 +278,14 @@ func (h *InvoiceRepository) GetAllForReceipt() (invoices []Model.Invoice, err er
 	}
 
 	return invoices, nil
+}
+
+func (h *InvoiceRepository) GetSale(saleId int) (sale Model.Sale, err error) {
+	if err := h.DB.Preload("Product").Where("id = ?", saleId).First(&sale).Error; err != nil {
+		return Model.Sale{}, err
+	}
+
+	return sale, nil
 }
 
 func (h *InvoiceRepository) UpdateInvoiceTotalPrice(invoiceID int) error {

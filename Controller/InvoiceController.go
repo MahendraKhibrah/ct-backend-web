@@ -68,7 +68,16 @@ func (h *InvoiceController) AddInvoice(ctx *gin.Context) {
 }
 
 func (h *InvoiceController) GetAllInvoice(ctx *gin.Context) {
-	invoices, err := h.InvoiceService.GetAllInvoice()
+	var request *Dto.GetInvoicesRequest
+
+	if err := ctx.ShouldBindQuery(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	invoices, err := h.InvoiceService.GetAllInvoice(request)
 	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{
 			"message": err.Error(),
@@ -140,6 +149,16 @@ func (h *InvoiceController) AddSaleToInvoice(ctx *gin.Context) {
 	}
 
 	if err := h.InvoiceService.AddSaleToInvoice(request); err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	if err := h.InvoiceService.UpdateStatus(&Dto.UpdateStatusRequest{
+		InvoiceId:       request.InvoiceId,
+		InvoiceStatusId: 3,
+	}); err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{
 			"message": err.Error(),
 		})
@@ -361,11 +380,6 @@ func (h *InvoiceController) UpdatePoFile(ctx *gin.Context) {
 		} else {
 			FileObj.Data = FileObj.File.Filename
 		}
-
-		err = h.InvoiceService.UpdateStatus(&Dto.UpdateStatusRequest{
-			InvoiceId:       invoiceId,
-			InvoiceStatusId: 2,
-		})
 	}
 
 	if err = h.StorageService.UploadFile(&Model.S3ObjectRequest{

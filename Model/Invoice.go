@@ -29,12 +29,15 @@ type Invoice struct {
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 	Client              Client `gorm:"foreignKey:ClientId"`
+	Sales               []Sale `gorm:"foreignKey:InvoiceId"`
 }
 
 type ShortInvoice struct {
 	ID          int
 	InvoiceCode string
 	ClientName  string
+	ProjectName string
+	TotalItems  int
 	CreatedAt   time.Time
 	Status      string
 	StatusId    int

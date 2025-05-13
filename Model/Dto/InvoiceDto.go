@@ -2,6 +2,7 @@ package Dto
 
 type CreateInvoiceRequest struct {
 	ClientId            int    `json:"client_id" binding:"required"`
+	IsTaxable           bool   `json:"is_taxable"`
 	InvoiceCode         string `json:"invoice_code"`
 	Seller              string `json:"seller"`
 	Platform            string `json:"platform"`
@@ -33,10 +34,9 @@ type UpdateSaleRequest struct {
 }
 
 type UpdateFakturRequest struct {
-	InvoiceId   int  `json:"invoice_id" binding:"required"`
-	Discount    int  `json:"discount"`
-	PaymentTerm int  `json:"payment_term" binding:"required"`
-	IsTaxable   bool `json:"is_taxable" binding:"required"`
+	InvoiceId   int `json:"invoice_id" binding:"required"`
+	Discount    int `json:"discount"`
+	PaymentTerm int `json:"payment_term" binding:"required"`
 }
 
 type UpdateMainInformationRequest struct {
@@ -69,4 +69,11 @@ type UpdateNotSentSaleRequest struct {
 
 type GetDocumentUrlRequest struct {
 	Key string `json:"key" binding:"required"`
+}
+
+type GetInvoicesRequest struct {
+	Search      string `form:"search"`
+	MaxQuantity string `form:"max_quantity"`
+	MinQuantity string `form:"min_quantity"`
+	Company     string `form:"company"`
 }
