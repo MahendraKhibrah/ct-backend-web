@@ -11,5 +11,5 @@ type Sale struct {
 	SendStatus   bool
 	NotSentCount int
 	CreatedAt    time.Time
-	Product      Product `gorm:"foreignKey:ProductId"`
+	Product      Product `gorm:"foreignKey:ProductId" json:"Product,omitempty"`
 }

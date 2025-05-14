@@ -190,7 +190,7 @@ func (h *DeliveryService) LockDeliveryOrder(request *Dto.LockDeliveryOrderReques
 	}
 
 	if notSentEmpty {
-		invoiceStatus++
+		invoiceStatus = 4
 		if !invoice.IsTaxable {
 			invoiceStatus++
 		}
