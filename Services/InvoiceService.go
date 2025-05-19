@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -47,6 +48,9 @@ func InvoiceServiceProvider(invoiceRepository Repository.IInvoiceRepository, Pro
 
 func (h *InvoiceService) AddInvoice(request *Dto.CreateInvoiceRequest) error {
 	invoice, err := h.InvoiceRepository.GetLast(request.IsTaxable)
+
+	log.Println("ini invoice terakhir", invoice)
+
 	if err != nil {
 		return err
 	}
@@ -169,10 +173,19 @@ func (h *InvoiceService) AddSaleToInvoice(request *Dto.AddSaleRequest) error {
 }
 
 func (h *InvoiceService) UpdateSale(request *Dto.UpdateSaleRequest) error {
-	count := request.Count - request.CurrentCount
-	err := h.ProductRepository.SumStockProduct(request.ProductId, count*-1)
+	sale, err := h.InvoiceRepository.GetSale(request.Id)
 	if err != nil {
 		return err
+	}
+
+	request.NotSentCount = 0
+	if sale.NotSentCount > 0 {
+		count := request.Count - request.CurrentCount
+		request.NotSentCount = sale.NotSentCount + count
+		err := h.ProductRepository.SumStockProduct(request.ProductId, count*-1)
+		if err != nil {
+			return err
+		}
 	}
 
 	return h.InvoiceRepository.UpdateSale(request)

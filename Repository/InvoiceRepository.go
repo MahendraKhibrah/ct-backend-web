@@ -148,7 +148,7 @@ func (h *InvoiceRepository) UpdateSale(request *Dto.UpdateSaleRequest) (err erro
 		Model(&Model.Sale{}).
 		Where("id = ?", request.Id).
 		Update("quantity", request.Count).
-		Update("not_sent_count", request.Count).
+		Update("not_sent_count", request.NotSentCount).
 		Update("price", request.Price).Error; err != nil {
 		return err
 	}
