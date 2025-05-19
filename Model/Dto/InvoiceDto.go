@@ -31,6 +31,7 @@ type UpdateSaleRequest struct {
 	CurrentCount int `json:"current_count" binding:"required"`
 	Count        int `json:"count" binding:"required"`
 	Price        int `json:"price" binding:"required"`
+	NotSentCount int `json:"not_sent_count"`
 }
 
 type UpdateFakturRequest struct {
