@@ -3,12 +3,14 @@ package Repository
 import (
 	"ct-backend/Model"
 	"ct-backend/Model/Dto"
+	"ct-backend/Utils"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type (
 	IReceiptRepository interface {
-		GetReceipts() ([]Model.Receipt, error)
+		GetReceipts(ctx *gin.Context) ([]Model.Receipt, error)
 		GetReceiptById(id int) (*Model.Receipt, error)
 		CreateReceipt(receipt *Model.Receipt) (*Model.Receipt, error)
 		GetLast() (*Model.Receipt, error)
@@ -30,9 +32,9 @@ func ReceiptRepositoryProvider(DB *gorm.DB) *ReceiptRepository {
 	}
 }
 
-func (h *ReceiptRepository) GetReceipts() ([]Model.Receipt, error) {
+func (h *ReceiptRepository) GetReceipts(ctx *gin.Context) ([]Model.Receipt, error) {
 	var receipts []Model.Receipt
-	if err := h.DB.Preload("Client").Find(&receipts).Error; err != nil {
+	if err := h.DB.Preload("Client").Scopes(Utils.Paginate(ctx)).Find(&receipts).Error; err != nil {
 		return nil, err
 	}
 

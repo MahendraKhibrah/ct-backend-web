@@ -96,6 +96,15 @@ func Paginate(ctx *gin.Context) func(db *gorm.DB) *gorm.DB {
 		var total int64
 		dbClone.Count(&total)
 
+		isAll := ctx.DefaultQuery("is_all", "false")
+
+		if "true" == isAll {
+			ctx.Set("total_pages", 1)
+			ctx.Set("page_size", total)
+			ctx.Set("page", 1)
+			return db
+		}
+
 		totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
 
 		ctx.Set("total_pages", totalPages)

@@ -33,7 +33,7 @@ func (h *PurchaseService) AddPurchase(request *Dto.CreatePurchaseRequest) (err e
 		return err
 	}
 
-	if err = h.ProductRepository.SumStockProduct(request.ProductId, request.Count); err != nil {
+	if err = h.ProductRepository.SumStockProduct(request.ProductId, request.Count, nil); err != nil {
 		return err
 	}
 
@@ -57,7 +57,7 @@ func (h *PurchaseService) DeletePurchase(id int) (err error) {
 		return err
 	}
 
-	if err = h.ProductRepository.SumStockProduct(purchase.ProductId, purchase.Count*-1); err != nil {
+	if err = h.ProductRepository.SumStockProduct(purchase.ProductId, purchase.Count*-1, nil); err != nil {
 		return err
 	}
 

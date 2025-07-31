@@ -5,8 +5,8 @@ import (
 	"ct-backend/Model/Dto"
 	"ct-backend/Repository"
 	"ct-backend/Utils"
-	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"log"
 	"strconv"
@@ -17,7 +17,7 @@ import (
 type (
 	IInvoiceService interface {
 		AddInvoice(request *Dto.CreateInvoiceRequest) error
-		GetAllInvoice(request *Dto.GetInvoicesRequest) ([]Model.ShortInvoice, error)
+		GetAllInvoice(request *Dto.GetInvoicesRequest, ctx *gin.Context) ([]Model.ShortInvoice, error)
 		GetInvoiceById(id int) (Model.Invoice, error)
 		LockInvoice(request *Dto.IdRequest) error
 		AddSaleToInvoice(request *Dto.AddSaleRequest) error
@@ -30,20 +30,27 @@ type (
 		UpdateStatus(request *Dto.UpdateStatusRequest) error
 		DeleteInvoice(request Dto.IdRequest) error
 		UpdateDocument(request Dto.UpdateDocumentRequest) error
+		GetPreviousSale(request Dto.GetPreviousSalesRequest) (Model.Sale, error)
 	}
 
 	InvoiceService struct {
-		InvoiceRepository Repository.IInvoiceRepository
-		ProductRepository Repository.IProductRepository
-		DB                *gorm.DB
+		InvoiceRepository  Repository.IInvoiceRepository
+		ProductRepository  Repository.IProductRepository
+		DeliveryRepository Repository.IDeliveryRepository
+		DB                 *gorm.DB
 	}
 )
 
-func InvoiceServiceProvider(invoiceRepository Repository.IInvoiceRepository, ProductRepository Repository.IProductRepository, DB *gorm.DB) *InvoiceService {
+func InvoiceServiceProvider(
+	invoiceRepository Repository.IInvoiceRepository,
+	ProductRepository Repository.IProductRepository,
+	DeliveryRepository Repository.IDeliveryRepository,
+	DB *gorm.DB) *InvoiceService {
 	return &InvoiceService{
-		InvoiceRepository: invoiceRepository,
-		ProductRepository: ProductRepository,
-		DB:                DB}
+		InvoiceRepository:  invoiceRepository,
+		ProductRepository:  ProductRepository,
+		DeliveryRepository: DeliveryRepository,
+		DB:                 DB}
 }
 
 func (h *InvoiceService) AddInvoice(request *Dto.CreateInvoiceRequest) error {
@@ -70,8 +77,8 @@ func (h *InvoiceService) AddInvoice(request *Dto.CreateInvoiceRequest) error {
 	return h.InvoiceRepository.Create(request)
 }
 
-func (h *InvoiceService) GetAllInvoice(request *Dto.GetInvoicesRequest) ([]Model.ShortInvoice, error) {
-	invoices, err := h.InvoiceRepository.GetAll(request)
+func (h *InvoiceService) GetAllInvoice(request *Dto.GetInvoicesRequest, ctx *gin.Context) ([]Model.ShortInvoice, error) {
+	invoices, err := h.InvoiceRepository.GetAll(request, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +171,7 @@ func (h *InvoiceService) LockInvoice(request *Dto.IdRequest) error {
 }
 
 func (h *InvoiceService) AddSaleToInvoice(request *Dto.AddSaleRequest) error {
-	err := h.ProductRepository.SumStockProduct(request.ProductId, request.Count*-1)
+	err := h.ProductRepository.SumStockProduct(request.ProductId, request.Count*-1, nil)
 	if err != nil {
 		return err
 	}
@@ -182,8 +189,19 @@ func (h *InvoiceService) UpdateSale(request *Dto.UpdateSaleRequest) error {
 	if sale.NotSentCount > 0 {
 		count := request.Count - request.CurrentCount
 		request.NotSentCount = sale.NotSentCount + count
-		err := h.ProductRepository.SumStockProduct(request.ProductId, count*-1)
+		err := h.ProductRepository.SumStockProduct(request.ProductId, count*-1, nil)
 		if err != nil {
+			return err
+		}
+	}
+
+	// if product change than update both their stock
+	if sale.ProductId != request.ProductId {
+		if err := h.ProductRepository.SumStockProduct(sale.ProductId, request.Count, nil); err != nil {
+			return err
+		}
+
+		if err := h.ProductRepository.SumStockProduct(request.ProductId, request.Count*-1, nil); err != nil {
 			return err
 		}
 	}
@@ -273,17 +291,50 @@ func (h *InvoiceService) UpdateStatus(request *Dto.UpdateStatusRequest) error {
 	return h.InvoiceRepository.UpdateStatus(request)
 }
 
-func (h *InvoiceService) DeleteInvoice(request Dto.IdRequest) error {
+func (h *InvoiceService) DeleteInvoice(request Dto.IdRequest) (err error) {
+	trx := h.DB.Begin()
+	if trx.Error != nil {
+		return trx.Error
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			trx.Rollback()
+			err = fmt.Errorf("panic occurred: %v", r)
+		} else if err != nil {
+			trx.Rollback()
+		} else {
+			trx.Commit()
+		}
+	}()
+
+	invoice, err := h.InvoiceRepository.GetById(request.Id)
+	if err != nil {
+		return err
+	}
+	if invoice.InvoiceStatusId > 5 {
+		return fmt.Errorf("cannot delete invoice with status %d", invoice.InvoiceStatusId)
+	}
+
 	products, err := h.InvoiceRepository.GetAllSale(request.Id)
 	if err != nil {
 		return err
 	}
 
-	if len(products) > 0 {
-		return errors.New("Invoice masih terdapat produk")
+	for _, product := range products {
+		if e := h.ProductRepository.SumStockProduct(product.ProductId, product.Quantity, trx); e != nil {
+			return e
+		}
 	}
 
-	return h.InvoiceRepository.Delete(request)
+	if err := h.InvoiceRepository.Delete(request, trx); err != nil {
+		return err
+	}
+
+	if err := h.DeliveryRepository.DeleteDelivery(&request, trx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (h *InvoiceService) GetAllSale(invoiceId int) ([]Model.Sale, error) {
@@ -319,4 +370,8 @@ func createInvoiceCode(invoice *Model.Invoice, isTaxable bool) (val string, err 
 
 func (h *InvoiceService) UpdateDocument(request Dto.UpdateDocumentRequest) error {
 	return h.InvoiceRepository.UpdateDocument(request)
+}
+
+func (h *InvoiceService) GetPreviousSale(request Dto.GetPreviousSalesRequest) (Model.Sale, error) {
+	return h.InvoiceRepository.GetPreviousSale(request.ProductID, request.ClientID)
 }

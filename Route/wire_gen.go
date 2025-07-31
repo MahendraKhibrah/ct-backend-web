@@ -48,7 +48,8 @@ func PurchaseDI(db *gorm.DB) *Controller.PurchaseController {
 func InvoiceDI(db *gorm.DB) *Controller.InvoiceController {
 	invoiceRepository := Repository.InvoiceRepositoryProvider(db)
 	productRepository := Repository.ProductRepositoryProvider(db)
-	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, productRepository, db)
+	deliveryRepository := Repository.DeliveryRepositoryProvider(db)
+	invoiceService := Services.InvoiceServiceProvider(invoiceRepository, productRepository, deliveryRepository, db)
 	minioService := Services.MinioServiceProvider()
 	invoiceController := Controller.InvoiceControllerProvider(invoiceService, minioService)
 	return invoiceController

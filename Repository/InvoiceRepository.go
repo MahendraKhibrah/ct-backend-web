@@ -3,18 +3,20 @@ package Repository
 import (
 	"ct-backend/Model"
 	"ct-backend/Model/Dto"
+	"ct-backend/Utils"
 	"errors"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"math"
 )
 
 type (
 	IInvoiceRepository interface {
-		GetAll(request *Dto.GetInvoicesRequest) ([]Model.Invoice, error)
+		GetAll(request *Dto.GetInvoicesRequest, ctx *gin.Context) ([]Model.Invoice, error)
 		GetById(id int) (Model.Invoice, error)
 		GetLast(isTaxable bool) (*Model.Invoice, error)
 		Create(request *Dto.CreateInvoiceRequest) (err error)
-		Delete(request Dto.IdRequest) (err error)
+		Delete(request Dto.IdRequest, trx *gorm.DB) (err error)
 		UpdateDocument(request Dto.UpdateDocumentRequest) (err error)
 		AddSale(request *Dto.AddSaleRequest) (err error)
 		GetAllSale(invoiceId int) ([]Model.Sale, error)
@@ -30,6 +32,7 @@ type (
 		GetAllForReceipt() ([]Model.Invoice, error)
 		UpdateInvoiceTotalPrice(invoiceID int) error
 		GetSale(saleId int) (Model.Sale, error)
+		GetPreviousSale(productID string, clientID string) (Model.Sale, error)
 	}
 
 	InvoiceRepository struct {
@@ -43,7 +46,7 @@ func InvoiceRepositoryProvider(DB *gorm.DB) *InvoiceRepository {
 	}
 }
 
-func (h *InvoiceRepository) GetAll(request *Dto.GetInvoicesRequest) (invoices []Model.Invoice, err error) {
+func (h *InvoiceRepository) GetAll(request *Dto.GetInvoicesRequest, ctx *gin.Context) (invoices []Model.Invoice, err error) {
 	query := h.DB.Debug().Joins("JOIN clients ON clients.id = invoices.client_id").Preload("Client").Preload("Sales")
 
 	if request.Search != "" {
@@ -54,7 +57,7 @@ func (h *InvoiceRepository) GetAll(request *Dto.GetInvoicesRequest) (invoices []
 		query = query.Where("invoice_code ILIKE ?", "%"+request.Company+"%")
 	}
 
-	if err := query.Order("created_at DESC").Find(&invoices).Error; err != nil {
+	if err := query.Order("created_at DESC").Scopes(Utils.Paginate(ctx)).Find(&invoices).Error; err != nil {
 		return nil, err
 	}
 
@@ -101,8 +104,17 @@ func (h *InvoiceRepository) Create(request *Dto.CreateInvoiceRequest) (err error
 	return nil
 }
 
-func (h *InvoiceRepository) Delete(request Dto.IdRequest) (err error) {
-	if err := h.DB.Where("id = ?", request.Id).Delete(&Model.Invoice{}).Error; err != nil {
+func (h *InvoiceRepository) Delete(request Dto.IdRequest, trx *gorm.DB) (err error) {
+	db := trx
+	if db == nil {
+		db = h.DB
+	}
+
+	if err := db.Where("id = ?", request.Id).Delete(&Model.Invoice{}).Error; err != nil {
+		return err
+	}
+
+	if err := db.Where("invoice_id = ?", request.Id).Delete(&Model.Sale{}).Error; err != nil {
 		return err
 	}
 
@@ -133,6 +145,7 @@ func (h *InvoiceRepository) AddSale(request *Dto.AddSaleRequest) (err error) {
 		Quantity:     request.Count,
 		Price:        request.Price,
 		NotSentCount: request.Count,
+		Unit:         request.Unit,
 		SendStatus:   false,
 	}
 
@@ -149,6 +162,8 @@ func (h *InvoiceRepository) UpdateSale(request *Dto.UpdateSaleRequest) (err erro
 		Where("id = ?", request.Id).
 		Update("quantity", request.Count).
 		Update("not_sent_count", request.NotSentCount).
+		Update("unit", request.Unit).
+		Update("product_id", request.ProductId).
 		Update("price", request.Price).Error; err != nil {
 		return err
 	}
@@ -205,6 +220,7 @@ func (h *InvoiceRepository) UpdateMainInformation(request *Dto.UpdateMainInforma
 		Update("platform_description", request.PlatformDescription).
 		Update("project_name", request.Project).
 		Update("date", request.Date).
+		Update("client_id", request.ClientID).
 		Update("platform_number", request.PlatformNumber).Error; err != nil {
 		return err
 	}
@@ -317,4 +333,17 @@ func (h *InvoiceRepository) UpdateInvoiceTotalPrice(invoiceID int) error {
 	}
 
 	return nil
+}
+
+func (h *InvoiceRepository) GetPreviousSale(productID string, clientID string) (sale Model.Sale, err error) {
+	if err := h.DB.
+		Joins("JOIN invoices ON invoices.id = sales.invoice_id").
+		Where("invoices.client_id = ?", clientID).
+		Where("sales.product_id = ?", productID).
+		Where("sales.price > ?", 1).
+		First(&sale).Error; err != nil {
+		return Model.Sale{}, err
+	}
+
+	return sale, nil
 }

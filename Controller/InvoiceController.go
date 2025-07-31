@@ -5,6 +5,7 @@ import (
 	"ct-backend/Model/Common"
 	"ct-backend/Model/Dto"
 	"ct-backend/Services"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -29,6 +30,7 @@ type (
 		GetPoUrl(ctx *gin.Context)
 		UpdateFakturFile(ctx *gin.Context)
 		GetFakturUrl(ctx *gin.Context)
+		GetPreviousSale(ctx *gin.Context)
 	}
 
 	InvoiceController struct {
@@ -77,7 +79,7 @@ func (h *InvoiceController) GetAllInvoice(ctx *gin.Context) {
 		return
 	}
 
-	invoices, err := h.InvoiceService.GetAllInvoice(request)
+	invoices, err := h.InvoiceService.GetAllInvoice(request, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{
 			"message": err.Error(),
@@ -85,9 +87,16 @@ func (h *InvoiceController) GetAllInvoice(ctx *gin.Context) {
 		return
 	}
 
+	pagination := Common.Pagination{
+		Total: ctx.GetInt("total_pages"),
+		Limit: ctx.GetInt("page_size"),
+		Page:  ctx.GetInt("page"),
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "success",
 		"data":    invoices,
+		"meta":    pagination,
 	})
 }
 
@@ -518,5 +527,30 @@ func (h *InvoiceController) GetFakturUrl(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "success",
 		"data":    url,
+	})
+}
+
+func (h *InvoiceController) GetPreviousSale(ctx *gin.Context) {
+	var request Dto.GetPreviousSalesRequest
+	fmt.Println("GetPreviousSale called")
+
+	if err := ctx.ShouldBindQuery(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	sales, err := h.InvoiceService.GetPreviousSale(request)
+	if err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    sales,
 	})
 }

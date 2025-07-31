@@ -4,6 +4,7 @@ import (
 	"ct-backend/Model"
 	"ct-backend/Model/Dto"
 	"ct-backend/Repository"
+	"errors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -102,6 +103,27 @@ func (h *DeliveryService) UpdateDeliveryProduct(request *Dto.UpdateDeliveryProdu
 }
 
 func (h *DeliveryService) DeleteDeliveryProduct(request *Dto.DeleteDeliveryProductRequest) (err error) {
+	sale, err := h.InvoiceRepo.GetSale(request.SaleId)
+	if err != nil {
+		return err
+	}
+
+	invoice, err := h.InvoiceRepo.GetById(sale.InvoiceId)
+	if err != nil {
+		return err
+	}
+
+	if invoice.InvoiceStatusId > 5 {
+		// return new error with message "tidak bisa dihapus, invoice sudah masuk tanda terima"
+		err = errors.New("tidak bisa dihapus, invoice sudah masuk tanda terima")
+		return err
+	}
+
+	deliveryProduct, err := h.Repo.GetDeliveryProductById(request.ID)
+	if err != nil {
+		return err
+	}
+
 	if err = h.Repo.DeleteDeliveryProduct(request); err != nil {
 		return err
 	}
@@ -109,6 +131,16 @@ func (h *DeliveryService) DeleteDeliveryProduct(request *Dto.DeleteDeliveryProdu
 	if err = h.InvoiceRepo.UpdateNotSentSale(&Dto.UpdateNotSentSaleRequest{SaleId: request.SaleId, Count: request.Quantity * -1}); err != nil {
 		return err
 	}
+
+	err = h.InvoiceRepo.UpdateStatus(&Dto.UpdateStatusRequest{
+		InvoiceId:       sale.InvoiceId,
+		InvoiceStatusId: 3,
+	})
+
+	err = h.Repo.UpdateDeliveryStatus(&Dto.UpdateDeliveryStatusRequest{
+		DeliveryId: deliveryProduct.DeliveryID,
+		Status:     1,
+	})
 
 	return nil
 }
@@ -125,6 +157,7 @@ func (h *DeliveryService) GetAllDeliveryProduct(request *Dto.IdRequest) (deliver
 			Name:     data.Sale.Product.Name,
 			Quantity: data.Quantity,
 			SaleID:   data.SalesID,
+			Unit:     data.Sale.Unit,
 		})
 	}
 

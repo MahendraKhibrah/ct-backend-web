@@ -1,6 +1,7 @@
 package Controller
 
 import (
+	"ct-backend/Model/Common"
 	"ct-backend/Model/Dto"
 	"ct-backend/Services"
 	"github.com/gin-gonic/gin"
@@ -48,7 +49,16 @@ func (h *ProductController) AddProduct(ctx *gin.Context) {
 }
 
 func (h *ProductController) GetAllProduct(ctx *gin.Context) {
-	products, err := h.ProductService.GetAllProduct()
+	var request *Dto.GetProductRequest
+
+	if err := ctx.ShouldBindQuery(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	products, err := h.ProductService.GetAllProduct(ctx, request)
 	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{
 			"message": err.Error(),
@@ -56,9 +66,16 @@ func (h *ProductController) GetAllProduct(ctx *gin.Context) {
 		return
 	}
 
+	pagination := Common.Pagination{
+		Total: ctx.GetInt("total_pages"),
+		Limit: ctx.GetInt("page_size"),
+		Page:  ctx.GetInt("page"),
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "success",
 		"data":    products,
+		"meta":    pagination,
 	})
 }
 
