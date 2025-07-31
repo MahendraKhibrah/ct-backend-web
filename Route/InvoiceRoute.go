@@ -33,4 +33,5 @@ func InitInvoice(c *gin.RouterGroup, db *gorm.DB) {
 	c.POST("/get-po-url", r.GetPoUrl)
 	c.POST("/update-faktur-file/:invoiceId", r.UpdateFakturFile)
 	c.POST("/get-faktur-url", r.GetFakturUrl)
+	c.GET("/get-previous-sale", r.GetPreviousSale)
 }

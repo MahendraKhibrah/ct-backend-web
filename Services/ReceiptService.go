@@ -4,12 +4,13 @@ import (
 	"ct-backend/Model"
 	"ct-backend/Model/Dto"
 	"ct-backend/Repository"
+	"github.com/gin-gonic/gin"
 	"time"
 )
 
 type (
 	IReceiptService interface {
-		GetAllReceipt() (receipts []Model.Receipt, err error)
+		GetAllReceipt(ctx *gin.Context) (receipts []Model.Receipt, err error)
 		GetReceiptById(id int) (receipt *Model.Receipt, err error)
 		CreateReceipt(clientId int) (m *Model.Receipt, err error)
 		GetInvoiceByReceiptId(id int) ([]Model.ReceiptInvoice, error)
@@ -34,8 +35,8 @@ func ReceiptServiceProvider(receiptRepository Repository.IReceiptRepository, inv
 	}
 }
 
-func (h *ReceiptService) GetAllReceipt() (receipts []Model.Receipt, err error) {
-	return h.ReceiptRepository.GetReceipts()
+func (h *ReceiptService) GetAllReceipt(ctx *gin.Context) (receipts []Model.Receipt, err error) {
+	return h.ReceiptRepository.GetReceipts(ctx)
 }
 
 func (h *ReceiptService) GetReceiptById(id int) (receipt *Model.Receipt, err error) {
@@ -64,6 +65,11 @@ func (h *ReceiptService) GetInvoiceByReceiptId(id int) ([]Model.ReceiptInvoice, 
 }
 
 func (h *ReceiptService) AddInvoiceReceipt(receiptInvoice *Dto.ReceiptInvoiceRequest) (*Model.ReceiptInvoice, error) {
+	err := h.InvoiceRepository.UpdateInvoiceTotalPrice(receiptInvoice.InvoiceId)
+	if err != nil {
+		return nil, err
+	}
+
 	return h.ReceiptRepository.AddInvoiceReceipt(receiptInvoice)
 }
 

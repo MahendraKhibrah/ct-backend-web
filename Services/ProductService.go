@@ -2,14 +2,16 @@ package Services
 
 import (
 	"ct-backend/Model"
+	"ct-backend/Model/Dto"
 	"ct-backend/Repository"
 	"errors"
+	"github.com/gin-gonic/gin"
 )
 
 type (
 	IProductService interface {
 		AddProduct(name string) error
-		GetAllProduct() (products []*Model.Product, err error)
+		GetAllProduct(ctx *gin.Context, request *Dto.GetProductRequest) (products []*Model.Product, err error)
 		EditNameProduct(id int, name string) (err error)
 	}
 
@@ -31,8 +33,8 @@ func (h *ProductService) AddProduct(name string) error {
 	return h.ProductRepository.AddProduct(name)
 }
 
-func (h *ProductService) GetAllProduct() (products []*Model.Product, err error) {
-	return h.ProductRepository.GetAllProduct()
+func (h *ProductService) GetAllProduct(ctx *gin.Context, request *Dto.GetProductRequest) (products []*Model.Product, err error) {
+	return h.ProductRepository.GetAllProduct(ctx, request)
 }
 
 func (h *ProductService) EditNameProduct(id int, name string) (err error) {

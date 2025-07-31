@@ -16,4 +16,5 @@ type ShortDeliveryProduct struct {
 	Name     string
 	Quantity int
 	SaleID   int
+	Unit     string
 }

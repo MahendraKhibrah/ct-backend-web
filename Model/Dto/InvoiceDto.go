@@ -18,20 +18,22 @@ type UpdateDocumentRequest struct {
 }
 
 type AddSaleRequest struct {
-	Id        int `json:"id"`
-	InvoiceId int `json:"invoice_id" binding:"required"`
-	ProductId int `json:"product_id" binding:"required"`
-	Count     int `json:"count" binding:"required"`
-	Price     int `json:"price" binding:"required"`
+	Id        int    `json:"id"`
+	InvoiceId int    `json:"invoice_id" binding:"required"`
+	ProductId int    `json:"product_id" binding:"required"`
+	Count     int    `json:"count" binding:"required"`
+	Price     int    `json:"price" binding:"required"`
+	Unit      string `json:"unit" binding:"required"`
 }
 
 type UpdateSaleRequest struct {
-	Id           int `json:"id"`
-	ProductId    int `json:"product_id" binding:"required"`
-	CurrentCount int `json:"current_count" binding:"required"`
-	Count        int `json:"count" binding:"required"`
-	Price        int `json:"price" binding:"required"`
-	NotSentCount int `json:"not_sent_count"`
+	Id           int    `json:"id"`
+	ProductId    int    `json:"product_id" binding:"required"`
+	CurrentCount int    `json:"current_count" binding:"required"`
+	Count        int    `json:"count" binding:"required"`
+	Price        int    `json:"price" binding:"required"`
+	Unit         string `json:"unit" binding:"required"`
+	NotSentCount int    `json:"not_sent_count"`
 }
 
 type UpdateFakturRequest struct {
@@ -51,6 +53,7 @@ type UpdateMainInformationRequest struct {
 	PlatformNumber      string `json:"platform_number" binding:"required"`
 	Project             string `json:"project" binding:"required"`
 	Date                string `json:"date"`
+	ClientID            int    `json:"client_id" binding:"required"`
 }
 
 type UpdateNoteRequest struct {
@@ -77,4 +80,9 @@ type GetInvoicesRequest struct {
 	MaxQuantity string `form:"max_quantity"`
 	MinQuantity string `form:"min_quantity"`
 	Company     string `form:"company"`
+}
+
+type GetPreviousSalesRequest struct {
+	ProductID string `form:"product_id" binding:"required"`
+	ClientID  string `form:"client_id" binding:"required"`
 }

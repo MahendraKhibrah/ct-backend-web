@@ -76,12 +76,14 @@ func InvoiceDI(db *gorm.DB) *Controller.InvoiceController {
 		Services.InvoiceServiceProvider,
 		Services.MinioServiceProvider,
 		Controller.InvoiceControllerProvider,
+		Repository.DeliveryRepositoryProvider,
 
 		wire.Bind(new(Controller.IInvoiceController), new(*Controller.InvoiceController)),
 		wire.Bind(new(Services.IStorageService), new(*Services.MinioService)),
 		wire.Bind(new(Services.IInvoiceService), new(*Services.InvoiceService)),
 		wire.Bind(new(Repository.IInvoiceRepository), new(*Repository.InvoiceRepository)),
 		wire.Bind(new(Repository.IProductRepository), new(*Repository.ProductRepository)),
+		wire.Bind(new(Repository.IDeliveryRepository), new(*Repository.DeliveryRepository)),
 	),
 	))
 	return &Controller.InvoiceController{}

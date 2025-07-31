@@ -1,6 +1,7 @@
 package Controller
 
 import (
+	"ct-backend/Model/Common"
 	"ct-backend/Model/Dto"
 	"ct-backend/Services"
 	"github.com/gin-gonic/gin"
@@ -32,7 +33,7 @@ func ReceiptControllerProvider(service Services.IReceiptService) *ReceiptControl
 }
 
 func (h *ReceiptController) GetReceipts(ctx *gin.Context) {
-	receipts, err := h.service.GetAllReceipt()
+	receipts, err := h.service.GetAllReceipt(ctx)
 
 	if err != nil {
 		ctx.JSON(500, gin.H{
@@ -42,9 +43,16 @@ func (h *ReceiptController) GetReceipts(ctx *gin.Context) {
 		return
 	}
 
+	pagination := Common.Pagination{
+		Total: ctx.GetInt("total_pages"),
+		Limit: ctx.GetInt("page_size"),
+		Page:  ctx.GetInt("page"),
+	}
+
 	ctx.JSON(200, gin.H{
 		"message": "success",
 		"data":    receipts,
+		"meta":    pagination,
 	})
 }
 

@@ -21,6 +21,8 @@ type (
 		UpdateMainInformation(request *Dto.UpdateDeliveryInformationRequest) (err error)
 		GetAllByInvoiceId(invoiceId int) (deliveries []Model.DeliveryOrder, err error)
 		UpdateDeliveryStatus(request *Dto.UpdateDeliveryStatusRequest) (err error)
+		DeleteDelivery(request *Dto.IdRequest, trx *gorm.DB) (err error)
+		GetDeliveryProductById(id int) (deliveryProduct *Model.DeliveryProduct, err error)
 	}
 
 	DeliveryRepository struct {
@@ -152,4 +154,33 @@ func (h *DeliveryRepository) UpdateDeliveryStatus(request *Dto.UpdateDeliverySta
 	}
 
 	return nil
+}
+
+func (h *DeliveryRepository) DeleteDelivery(request *Dto.IdRequest, trx *gorm.DB) (err error) {
+	db := trx
+	if db == nil {
+		db = h.DB
+	}
+
+	deliveryOrder := &Model.DeliveryOrder{
+		ID: request.Id,
+	}
+
+	if err := db.Delete(&deliveryOrder).Error; err != nil {
+		return err
+	}
+
+	if err := db.Where("delivery_id = ?", request.Id).Delete(&Model.DeliveryProduct{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *DeliveryRepository) GetDeliveryProductById(id int) (deliveryProduct *Model.DeliveryProduct, err error) {
+	if err := h.DB.Preload("Sale.Product").Where("id = ?", id).First(&deliveryProduct).Error; err != nil {
+		return nil, err
+	}
+
+	return deliveryProduct, nil
 }
