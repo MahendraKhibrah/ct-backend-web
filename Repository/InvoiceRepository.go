@@ -341,6 +341,7 @@ func (h *InvoiceRepository) GetPreviousSale(productID string, clientID string) (
 		Where("invoices.client_id = ?", clientID).
 		Where("sales.product_id = ?", productID).
 		Where("sales.price > ?", 1).
+		Order("sales.created_at DESC").
 		First(&sale).Error; err != nil {
 		return Model.Sale{}, err
 	}

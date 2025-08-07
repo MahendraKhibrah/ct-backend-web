@@ -5,7 +5,6 @@ import (
 	"ct-backend/Model/Common"
 	"ct-backend/Model/Dto"
 	"ct-backend/Services"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -532,7 +531,6 @@ func (h *InvoiceController) GetFakturUrl(ctx *gin.Context) {
 
 func (h *InvoiceController) GetPreviousSale(ctx *gin.Context) {
 	var request Dto.GetPreviousSalesRequest
-	fmt.Println("GetPreviousSale called")
 
 	if err := ctx.ShouldBindQuery(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
