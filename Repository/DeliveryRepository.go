@@ -45,7 +45,7 @@ func (h *DeliveryRepository) GetById(id int) (delivery *Model.DeliveryOrder, err
 }
 
 func (h *DeliveryRepository) GetAll(ctx *gin.Context) (deliveries []Model.DeliveryOrder, err error) {
-	if err := h.DB.Preload("Invoice.Client").Where("order_code LIKE ?", "%"+ctx.Query("order_code")+"%").Order("created_at desc").Scopes(Utils.Paginate(ctx)).Find(&deliveries).Error; err != nil {
+	if err := h.DB.Preload("Invoice.Client").Where("order_code ILIKE ?", "%"+ctx.Query("order_code")+"%").Order("created_at desc").Scopes(Utils.Paginate(ctx)).Find(&deliveries).Error; err != nil {
 		return nil, err
 	}
 
