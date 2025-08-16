@@ -34,7 +34,7 @@ func ReceiptRepositoryProvider(DB *gorm.DB) *ReceiptRepository {
 
 func (h *ReceiptRepository) GetReceipts(ctx *gin.Context) ([]Model.Receipt, error) {
 	var receipts []Model.Receipt
-	if err := h.DB.Preload("Client").Scopes(Utils.Paginate(ctx)).Find(&receipts).Error; err != nil {
+	if err := h.DB.Preload("Client").Order("created_at desc").Scopes(Utils.Paginate(ctx)).Find(&receipts).Error; err != nil {
 		return nil, err
 	}
 

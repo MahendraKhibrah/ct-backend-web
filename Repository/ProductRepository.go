@@ -55,7 +55,7 @@ func (h *ProductRepository) GetAllProduct(ctx *gin.Context, request *Dto.GetProd
 	query := h.DB
 
 	if request.Search != "" {
-		query = query.Where("name LIKE ?", "%"+request.Search+"%")
+		query = query.Where("name ILIKE ?", "%"+request.Search+"%")
 	}
 
 	if err := query.Scopes(Utils.Paginate(ctx)).Find(&products).Error; err != nil {
