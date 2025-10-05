@@ -54,6 +54,7 @@ type UpdateMainInformationRequest struct {
 	Project             string `json:"project" binding:"required"`
 	Date                string `json:"date"`
 	ClientID            int    `json:"client_id" binding:"required"`
+	InvoiceCode         string `json:"invoice_code" binding:"required"`
 }
 
 type UpdateNoteRequest struct {

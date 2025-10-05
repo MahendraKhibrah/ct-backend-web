@@ -24,4 +24,5 @@ func InitDelivery(c *gin.RouterGroup, db *gorm.DB) {
 	c.PUT("/lock-delivery-order", r.LockDeliveryOrder)
 	c.GET("/delivery/get-available-invoices", r.GetAvailableInvoices)
 	c.GET("/delivery/get-available-sales/:id", r.GetAvailableSales)
+	c.POST("/delivery/add-all-available-sale", r.AddAllAvailableSale)
 }

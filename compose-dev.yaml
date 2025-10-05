@@ -2,7 +2,7 @@ services:
   server:
     build:
       context: .
-    image: 10.0.0.2:81/dev/ct-backend:latest
+    image: debian-server.taile49fd9.ts.net:81/dev/ct-backend:latest
     container_name: ct-backend-dev
     restart: always
     ports:

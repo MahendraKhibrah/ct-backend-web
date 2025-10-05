@@ -221,6 +221,7 @@ func (h *InvoiceRepository) UpdateMainInformation(request *Dto.UpdateMainInforma
 		Update("project_name", request.Project).
 		Update("date", request.Date).
 		Update("client_id", request.ClientID).
+		Update("invoice_code", request.InvoiceCode).
 		Update("platform_number", request.PlatformNumber).Error; err != nil {
 		return err
 	}

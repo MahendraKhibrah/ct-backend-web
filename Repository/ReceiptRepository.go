@@ -118,6 +118,10 @@ func (h *ReceiptRepository) DeleteInvoiceReceipt(id int) error {
 			return err
 		}
 
+		if err := tx.Model(&Model.Receipt{}).Where("id = ?", receiptInvoices.ReceiptId).Update("status", 1).Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
 
