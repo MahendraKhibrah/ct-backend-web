@@ -9,7 +9,6 @@ type (
 	IUserService interface {
 		GetAllVerified() (users []Model.User, err error)
 	}
-
 	UserService struct {
 		UserRepository Repository.IUserRepository
 	}
