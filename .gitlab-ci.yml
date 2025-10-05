@@ -4,7 +4,7 @@ stages:
 deploy_prod:
   stage: deploy
   variables:
-    IMAGE_NAME: 10.0.0.2:81/prod/ct-core:latest
+    IMAGE_NAME: debian-server.taile49fd9.ts.net:81/prod/ct-core:latest
     CORE_PORT: 8888
   before_script:
     - docker login -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD" $HARBOR_URL
@@ -21,7 +21,7 @@ deploy_prod:
 deploy_staging:
   stage: deploy
   variables:
-    IMAGE_NAME: 10.0.0.2:81/staging/ct-core:latest
+    IMAGE_NAME: debian-server.taile49fd9.ts.net:81/staging/ct-core:latest
     CORE_PORT: 18888
   before_script:
     - docker login -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD" $HARBOR_URL

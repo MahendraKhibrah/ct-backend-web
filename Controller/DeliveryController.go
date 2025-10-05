@@ -24,6 +24,7 @@ type (
 		LockDeliveryOrder(ctx *gin.Context)
 		GetAvailableInvoices(ctx *gin.Context)
 		GetAvailableSales(ctx *gin.Context)
+		AddAllAvailableSale(ctx *gin.Context)
 	}
 
 	DeliveryController struct {
@@ -294,5 +295,42 @@ func (h *DeliveryController) GetAvailableSales(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{
 		"message": "success",
 		"data":    sales,
+	})
+}
+
+func (h *DeliveryController) AddAllAvailableSale(ctx *gin.Context) {
+	var request *Dto.LockDeliveryOrderRequest
+	if err := ctx.ShouldBind(&request); err != nil {
+		ctx.JSON(400, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	sales, err := h.DeliveryService.GetAvailableSales(request.InvoiceId)
+	if err != nil {
+		ctx.JSON(500, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	for _, sale := range sales {
+		request := &Dto.CreateDeliveryProductRequest{
+			DeliveryID: request.DeliveryId,
+			SalesID:    sale.ID,
+			Quantity:   sale.NotSentCount,
+		}
+
+		if err := h.DeliveryService.CreateDeliveryProduct(request); err != nil {
+			ctx.JSON(500, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+	}
+
+	ctx.JSON(200, gin.H{
+		"message": "success",
 	})
 }
