@@ -1,12 +1,13 @@
 package Utils
 
 import (
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"math"
 	"net/smtp"
 	"os"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func SendEmailToAdmin(subject string, message string) error {
@@ -86,8 +87,8 @@ func Paginate(ctx *gin.Context) func(db *gorm.DB) *gorm.DB {
 
 		pageSize, _ := strconv.Atoi(ctx.DefaultQuery("page_size", "10"))
 		switch {
-		case pageSize > 100:
-			pageSize = 100
+		case pageSize > 200:
+			pageSize = 200
 		case pageSize <= 0:
 			pageSize = 10
 		}
