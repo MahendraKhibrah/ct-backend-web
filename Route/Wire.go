@@ -8,6 +8,7 @@ import (
 	"ct-backend/Middleware"
 	"ct-backend/Repository"
 	"ct-backend/Services"
+
 	"github.com/google/wire"
 	"gorm.io/gorm"
 )
@@ -147,4 +148,18 @@ func ReceiptDI(db *gorm.DB) *Controller.ReceiptController {
 	),
 	))
 	return &Controller.ReceiptController{}
+}
+
+func DashboardDI(db *gorm.DB) *Controller.DashboardController {
+	panic(wire.Build(wire.NewSet(
+		Repository.DashboardRepositoryProvider,
+		Services.DashboardServiceProvider,
+		Controller.DashboardControllerProvider,
+
+		wire.Bind(new(Controller.IDashboardController), new(*Controller.DashboardController)),
+		wire.Bind(new(Services.IDashboardService), new(*Services.DashboardService)),
+		wire.Bind(new(Repository.IDashboardRepository), new(*Repository.DashboardRepository)),
+	),
+	))
+	return &Controller.DashboardController{}
 }

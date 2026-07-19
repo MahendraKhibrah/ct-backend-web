@@ -1,37 +1,60 @@
 stages:
   - deploy
 
-deploy_prod:
+.deploy:
   stage: deploy
+  interruptible: false
   variables:
-    IMAGE_NAME: debian-server.taile49fd9.ts.net:81/prod/ct-core:latest
-    CORE_PORT: 8888
+    DOCKER_BUILDKIT: "1"
+    DOCKER_NETWORK: web
+    ENV_FILE: .env.deploy
+    DEPLOY_WAIT_TIMEOUT: "90"
   before_script:
-    - docker login -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD" $HARBOR_URL
+    - docker version
+    - docker compose version
   script:
-    - echo "Menarik image dari Harbor..."
-    - docker pull $IMAGE_NAME
-    - echo "Menghentikan container lama (jika ada)..."
-    - docker rm -f ct-core-prod || true
-    - echo "Menjalankan container..."
-    - docker run -d --name ct-core-prod --network web -p $CORE_PORT:$CORE_PORT $IMAGE_NAME
-  only:
-    - main
+    - |
+      if [ -z "${APP_ENV_FILE:-}" ]; then
+        echo "APP_ENV_FILE belum dikonfigurasi pada GitLab CI/CD Variables."
+        exit 1
+      fi
 
-deploy_staging:
-  stage: deploy
+      umask 077
+      if [ -f "$APP_ENV_FILE" ]; then
+        cp "$APP_ENV_FILE" "$ENV_FILE"
+      else
+        printf '%s\n' "$APP_ENV_FILE" > "$ENV_FILE"
+      fi
+
+      chmod 600 "$ENV_FILE"
+    - sh docker/deploy.sh
+  after_script:
+    - rm -f .env.deploy
+
+production:
+  extends: .deploy
+  resource_group: ct-core-production
+  environment:
+    name: production
   variables:
-    IMAGE_NAME: debian-server.taile49fd9.ts.net:81/staging/ct-core:latest
-    CORE_PORT: 18888
-  before_script:
-    - docker login -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD" $HARBOR_URL
-  script:
-    - echo "Menarik image dari Harbor..."
-    - docker pull $IMAGE_NAME
-    - echo "Menghentikan container lama (jika ada)..."
-    - docker rm -f ct-core-staging || true
-    - echo "Menjalankan container..."
-    - docker run -d --name ct-core-staging --network web -p $CORE_PORT:$CORE_PORT $IMAGE_NAME
-  only:
-    - staging
+    COMPOSE_PROJECT_NAME: ct-core-prod
+    CONTAINER_NAME: ct-core-prod
+    IMAGE_NAME: ct-core:production
+    HOST_PORT: "8888"
+    CONTAINER_PORT: "8888"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
+deployment_staging:
+  extends: .deploy
+  resource_group: ct-core-staging
+  environment:
+    name: staging
+  variables:
+    COMPOSE_PROJECT_NAME: ct-core-staging
+    CONTAINER_NAME: ct-core-staging
+    IMAGE_NAME: ct-core:staging
+    HOST_PORT: "18888"
+    CONTAINER_PORT: "18888"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'

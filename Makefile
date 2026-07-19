@@ -3,13 +3,15 @@ wire-gen :
 	wire gen
 	cd ..
 
-build-prod :
-	docker build -f dockerfile-prod -t debian-server.taile49fd9.ts.net:81/prod/ct-core:latest .
-	docker push debian-server.taile49fd9.ts.net:81/prod/ct-core:latest
+docker-build :
+	docker compose build
 
-build-staging :
-	docker build -f dockerfile-staging -t debian-server.taile49fd9.ts.net:81/staging/ct-core:latest .
-	docker push debian-server.taile49fd9.ts.net:81/staging/ct-core:latest
+docker-up :
+	docker compose up -d --build --pull never
+
+docker-down :
+	docker compose down --remove-orphans
+
 
 generate-kube-config :
 	kompose -f docker-compose.yml convert

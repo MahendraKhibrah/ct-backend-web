@@ -3,11 +3,12 @@ package main
 import (
 	"ct-backend/Config"
 	"ct-backend/Route"
+	"log"
+	"os"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"log"
-	"os"
 )
 
 func main() {
@@ -54,7 +55,7 @@ func main() {
 	if os.Getenv("APP_ENV") == "localhost" {
 		serve = "127.0.0.1:" + port
 	} else {
-		serve = ":" + port
+		serve = "0.0.0.0:" + port
 	}
 
 	// init route and DI

@@ -84,3 +84,10 @@ func ReceiptDI(db *gorm.DB) *Controller.ReceiptController {
 	receiptController := Controller.ReceiptControllerProvider(receiptService)
 	return receiptController
 }
+
+func DashboardDI(db *gorm.DB) *Controller.DashboardController {
+	dashboardRepository := Repository.DashboardRepositoryProvider(db)
+	dashboardService := Services.DashboardServiceProvider(dashboardRepository)
+	dashboardController := Controller.DashboardControllerProvider(dashboardService)
+	return dashboardController
+}
